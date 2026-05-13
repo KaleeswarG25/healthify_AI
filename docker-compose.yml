@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+
+  auth-service:
+    build: ./services/auth-service
+    ports:
+      - "8000:8000"
+
+  report-service:
+    build: ./services/report-service
+    ports:
+      - "8001:8001"
+
+  ai-service:
+    build: ./services/ai-service
+    ports:
+      - "8002:8002"
+
+  gateway:
+    build: ./gateway
+    ports:
+      - "9000:80"
+    depends_on:
+      - auth-service
+      - report-service
+      - ai-service
