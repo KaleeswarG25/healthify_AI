@@ -1,0 +1,255 @@
+# Default values for AIHealth Helm chart
+global:
+  # Global image configuration
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+  # Global replica configuration
+  replicas: 1
+
+  # Global image configuration
+  image:
+    registry: ""
+    repository: ""
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  # Global environment variables
+  env: {}
+
+  # Global resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "changeme"
+    username: "aihealth"
+    password: "changeme"
+    database: "aihealth"
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# Redis configuration
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+# Auth Service configuration
+authService:
+  enabled: true
+  name: auth-service
+  image:
+    repository: your-registry/auth-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  port: 8000
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://aihealth:changeme@postgresql:5432/aihealth"
+    - name: JWT_SECRET
+      value: "your-jwt-secret-key"
+    - name: REDIS_URL
+      value: "redis://redis-master:6379"
+
+# Report Service configuration
+reportService:
+  enabled: true
+  name: report-service
+  image:
+    repository: your-registry/report-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  port: 8001
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 8001
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://aihealth:changeme@postgresql:5432/aihealth"
+    - name: AWS_ACCESS_KEY_ID
+      value: "your-aws-access-key"
+    - name: AWS_SECRET_ACCESS_KEY
+      value: "your-aws-secret-key"
+    - name: AWS_S3_BUCKET
+      value: "your-s3-bucket"
+    - name: REDIS_URL
+      value: "redis://redis-master:6379"
+
+# AI Service configuration
+aiService:
+  enabled: true
+  name: ai-service
+  image:
+    repository: your-registry/ai-service
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  port: 8002
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 8002
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  env:
+    - name: DATABASE_URL
+      value: "postgresql://aihealth:changeme@postgresql:5432/aihealth"
+    - name: REDIS_URL
+      value: "redis://redis-master:6379"
+
+# Gateway (Nginx) configuration
+gateway:
+  enabled: true
+  name: gateway
+  image:
+    repository: nginx
+    tag: "1.25-alpine"
+    pullPolicy: IfNotPresent
+  port: 80
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Frontend configuration
+frontend:
+  enabled: true
+  name: frontend
+  image:
+    repository: your-registry/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  port: 80
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+
+prometheus:
+  server:
+    persistentVolume:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 200m
+        memory: 512Mi
+    retention: "15d"
+
+grafana:
+  adminPassword: "admin"
+  persistence:
+    enabled: true
+    size: 8Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Network policies
+networkPolicy:
+  enabled: true
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: aihealth.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
